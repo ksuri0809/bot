@@ -1,0 +1,663 @@
+
+-- Khởi tạo môi trường
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+local LocalPlayer = Players.LocalPlayer
+
+-- Tạo ScreenGui chính
+local OrionLib = {}
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "BloxFruitsHub"
+ScreenGui.Parent = CoreGui
+ScreenGui.ResetOnSpawn = false
+
+-- Bảo vệ chống phát hiện
+syn.protect_gui(ScreenGui)
+
+-- Icon Toggle (Hiển thị/Ẩn Menu)
+local IconButton = Instance.new("ImageButton")
+IconButton.Name = "MenuIcon"
+IconButton.Parent = ScreenGui
+IconButton.Size = UDim2.new(0, 60, 0, 60)
+IconButton.Position = UDim2.new(0, 20, 0.5, -30)
+IconButton.BackgroundTransparency = 1
+IconButton.Image = "rbxassetid://https://files.catbox.moe/wqv75w.png" -- Icon từ link
+IconButton.Draggable = true
+IconButton.Active = true
+
+-- Menu Chính
+local MainMenu = Instance.new("Frame")
+MainMenu.Name = "MainMenu"
+MainMenu.Parent = ScreenGui
+MainMenu.Size = UDim2.new(0, 550, 0, 400)
+MainMenu.Position = UDim2.new(0.5, -275, 0.5, -200)
+MainMenu.BackgroundTransparency = 0.1
+MainMenu.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+MainMenu.Visible = false
+MainMenu.Active = true
+MainMenu.Draggable = true
+
+-- Hình nền Menu
+local Background = Instance.new("ImageLabel")
+Background.Name = "Background"
+Background.Parent = MainMenu
+Background.Size = UDim2.new(1, 0, 1, 0)
+Background.Position = UDim2.new(0, 0, 0, 0)
+Background.Image = "rbxassetid://https://files.catbox.moe/4txoxc.png" -- Hình nền từ link
+Background.BackgroundTransparency = 0
+Background.ScaleType = Enum.ScaleType.Crop
+
+-- Bo góc cho Menu
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 10)
+UICorner.Parent = MainMenu
+
+-- Thanh tiêu đề
+local TitleBar = Instance.new("Frame")
+TitleBar.Name = "TitleBar"
+TitleBar.Parent = MainMenu
+TitleBar.Size = UDim2.new(1, 0, 0, 35)
+TitleBar.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
+TitleBar.BorderSizePixel = 0
+
+local TitleText = Instance.new("TextLabel")
+TitleText.Name = "Title"
+TitleText.Parent = TitleBar
+TitleText.Size = UDim2.new(1, -40, 1, 0)
+TitleText.Position = UDim2.new(0, 15, 0, 0)
+TitleText.Text = "BLOX FRUITS HUB - PREMIUM"
+TitleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleText.TextSize = 16
+TitleText.Font = Enum.Font.GothamBold
+TitleText.BackgroundTransparency = 1
+TitleText.TextXAlignment = Enum.TextXAlignment.Left
+
+-- Nút đóng menu
+local CloseButton = Instance.new("TextButton")
+CloseButton.Name = "Close"
+CloseButton.Parent = TitleBar
+CloseButton.Size = UDim2.new(0, 30, 0, 30)
+CloseButton.Position = UDim2.new(1, -35, 0, 2)
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 100, 100)
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.TextSize = 18
+CloseButton.BackgroundTransparency = 1
+
+-- Tab Container
+local TabContainer = Instance.new("Frame")
+TabContainer.Name = "Tabs"
+TabContainer.Parent = MainMenu
+TabContainer.Size = UDim2.new(0, 140, 1, -35)
+TabContainer.Position = UDim2.new(0, 0, 0, 35)
+TabContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 42)
+TabContainer.BorderSizePixel = 0
+
+local UICorner2 = Instance.new("UICorner")
+UICorner2.CornerRadius = UDim.new(0, 10)
+UICorner2.Parent = TabContainer
+
+-- Content Container
+local ContentContainer = Instance.new("Frame")
+ContentContainer.Name = "Content"
+ContentContainer.Parent = MainMenu
+ContentContainer.Size = UDim2.new(1, -145, 1, -35)
+ContentContainer.Position = UDim2.new(0, 145, 0, 35)
+ContentContainer.BackgroundTransparency = 1
+ContentContainer.BorderSizePixel = 0
+
+-- Scroll Frame cho nội dung
+local ScrollFrame = Instance.new("ScrollingFrame")
+ScrollFrame.Name = "Scroll"
+ScrollFrame.Parent = ContentContainer
+ScrollFrame.Size = UDim2.new(1, 0, 1, 0)
+ScrollFrame.BackgroundTransparency = 1
+ScrollFrame.ScrollBarThickness = 5
+ScrollFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 255)
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Parent = ScrollFrame
+UIListLayout.Padding = UDim.new(0, 5)
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- Hàm tạo Tab
+function OrionLib:MakeTab(Name, Icon)
+    local TabButton = Instance.new("TextButton")
+    TabButton.Name = Name.."Tab"
+    TabButton.Parent = TabContainer
+    TabButton.Size = UDim2.new(1, -10, 0, 35)
+    TabButton.Position = UDim2.new(0, 5, 0, #TabContainer:GetChildren() * 40)
+    TabButton.Text = " "..Icon.."  "..Name
+    TabButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+    TabButton.Font = Enum.Font.GothamSemibold
+    TabButton.TextSize = 13
+    TabButton.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+    TabButton.BackgroundTransparency = 0.3
+    TabButton.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local TabCorner = Instance.new("UICorner")
+    TabCorner.CornerRadius = UDim.new(0, 6)
+    TabCorner.Parent = TabButton
+    
+    local TabContent = Instance.new("Frame")
+    TabContent.Name = Name.."Content"
+    TabContent.Parent = ScrollFrame
+    TabContent.Size = UDim2.new(1, -10, 0, 0)
+    TabContent.BackgroundTransparency = 1
+    TabContent.Visible = false
+    
+    local SectionList = Instance.new("UIListLayout")
+    SectionList.Parent = TabContent
+    SectionList.Padding = UDim.new(0, 5)
+    
+    local CurrentSection = nil
+    
+    -- Hàm tạo Section
+    function TabContent:AddSection(Name)
+        local Section = Instance.new("Frame")
+        Section.Name = Name.."Section"
+        Section.Parent = self
+        Section.Size = UDim2.new(1, 0, 0, 0)
+        Section.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
+        Section.BackgroundTransparency = 0.3
+        
+        local SectionCorner = Instance.new("UICorner")
+        SectionCorner.CornerRadius = UDim.new(0, 8)
+        SectionCorner.Parent = Section
+        
+        local SectionTitle = Instance.new("TextLabel")
+        SectionTitle.Name = "SectionTitle"
+        SectionTitle.Parent = Section
+        SectionTitle.Size = UDim2.new(1, -10, 0, 25)
+        SectionTitle.Position = UDim2.new(0, 5, 0, 5)
+        SectionTitle.Text = Name
+        SectionTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+        SectionTitle.Font = Enum.Font.GothamBold
+        SectionTitle.TextSize = 14
+        SectionTitle.BackgroundTransparency = 1
+        SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
+        
+        local ContentList = Instance.new("UIListLayout")
+        ContentList.Parent = Section
+        ContentList.Padding = UDim.new(0, 3)
+        
+        CurrentSection = Section
+        return Section
+    end
+    
+    -- Hàm tạo Toggle
+    function TabContent:AddToggle(Name, Default, Callback)
+        local Toggle = Instance.new("Frame")
+        Toggle.Name = Name.."Toggle"
+        Toggle.Parent = CurrentSection
+        Toggle.Size = UDim2.new(1, -10, 0, 30)
+        Toggle.Position = UDim2.new(0, 5, 0, 0)
+        Toggle.BackgroundTransparency = 1
+        
+        local ToggleLabel = Instance.new("TextLabel")
+        ToggleLabel.Parent = Toggle
+        ToggleLabel.Size = UDim2.new(0.7, 0, 1, 0)
+        ToggleLabel.Text = "  "..Name
+        ToggleLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+        ToggleLabel.Font = Enum.Font.Gotham
+        ToggleLabel.TextSize = 12
+        ToggleLabel.BackgroundTransparency = 1
+        ToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        
+        local ToggleButton = Instance.new("Frame")
+        ToggleButton.Parent = Toggle
+        ToggleButton.Size = UDim2.new(0, 35, 0, 18)
+        ToggleButton.Position = UDim2.new(1, -40, 0.5, -9)
+        ToggleButton.BackgroundColor3 = Default and Color3.fromRGB(80, 200, 120) or Color3.fromRGB(80, 80, 100)
+        
+        local ToggleRound = Instance.new("UICorner")
+        ToggleRound.CornerRadius = UDim.new(1, 0)
+        ToggleRound.Parent = ToggleButton
+        
+        local ToggleDot = Instance.new("Frame")
+        ToggleDot.Parent = ToggleButton
+        ToggleDot.Size = UDim2.new(0, 14, 0, 14)
+        ToggleDot.Position = Default and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
+        ToggleDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        
+        local DotRound = Instance.new("UICorner")
+        DotRound.CornerRadius = UDim.new(1, 0)
+        DotRound.Parent = ToggleDot
+        
+        local Toggled = Default
+        
+        ToggleButton.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                Toggled = not Toggled
+                local goal = {}
+                goal.BackgroundColor3 = Toggled and Color3.fromRGB(80, 200, 120) or Color3.fromRGB(80, 80, 100)
+                local tween = TweenService:Create(ToggleButton, TweenInfo.new(0.2), goal)
+                tween:Play()
+                
+                local dotGoal = {}
+                dotGoal.Position = Toggled and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
+                local dotTween = TweenService:Create(ToggleDot, TweenInfo.new(0.2), dotGoal)
+                dotTween:Play()
+                
+                Callback(Toggled)
+            end
+        end)
+        
+        return Toggle
+    end
+    
+    -- Hàm tạo Button
+    function TabContent:AddButton(Name, Callback)
+        local Button = Instance.new("TextButton")
+        Button.Name = Name.."Button"
+        Button.Parent = CurrentSection
+        Button.Size = UDim2.new(1, -10, 0, 30)
+        Button.Position = UDim2.new(0, 5, 0, 0)
+        Button.Text = Name
+        Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+        Button.Font = Enum.Font.GothamSemibold
+        Button.TextSize = 12
+        Button.BackgroundColor3 = Color3.fromRGB(80, 120, 255)
+        
+        local ButtonCorner = Instance.new("UICorner")
+        ButtonCorner.CornerRadius = UDim.new(0, 6)
+        ButtonCorner.Parent = Button
+        
+        Button.MouseButton1Click:Connect(Callback)
+        return Button
+    end
+    
+    -- Hàm tạo Slider
+    function TabContent:AddSlider(Name, Min, Max, Default, Callback)
+        local Slider = Instance.new("Frame")
+        Slider.Name = Name.."Slider"
+        Slider.Parent = CurrentSection
+        Slider.Size = UDim2.new(1, -10, 0, 50)
+        Slider.Position = UDim2.new(0, 5, 0, 0)
+        Slider.BackgroundTransparency = 1
+        
+        local SliderLabel = Instance.new("TextLabel")
+        SliderLabel.Parent = Slider
+        SliderLabel.Size = UDim2.new(1, 0, 0, 20)
+        SliderLabel.Text = "  "..Name..": "..Default
+        SliderLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+        SliderLabel.Font = Enum.Font.Gotham
+        SliderLabel.TextSize = 12
+        SliderLabel.BackgroundTransparency = 1
+        SliderLabel.TextXAlignment = Enum.TextXAlignment.Left
+        
+        local SliderBar = Instance.new("Frame")
+        SliderBar.Parent = Slider
+        SliderBar.Size = UDim2.new(1, -10, 0, 8)
+        SliderBar.Position = UDim2.new(0, 5, 0, 25)
+        SliderBar.BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+        
+        local BarCorner = Instance.new("UICorner")
+        BarCorner.CornerRadius = UDim.new(0, 4)
+        BarCorner.Parent = SliderBar
+        
+        local SliderFill = Instance.new("Frame")
+        SliderFill.Parent = SliderBar
+        SliderFill.Size = UDim2.new((Default - Min) / (Max - Min), 0, 1, 0)
+        SliderFill.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
+        
+        local FillCorner = Instance.new("UICorner")
+        FillCorner.CornerRadius = UDim.new(0, 4)
+        FillCorner.Parent = SliderFill
+        
+        local SliderButton = Instance.new("TextButton")
+        SliderButton.Parent = SliderBar
+        SliderButton.Size = UDim2.new(0, 18, 0, 18)
+        SliderButton.Position = UDim2.new((Default - Min) / (Max - Min), -9, 0.5, -9)
+        SliderButton.Text = ""
+        SliderButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        
+        local ButtonCorner = Instance.new("UICorner")
+        ButtonCorner.CornerRadius = UDim.new(1, 0)
+        ButtonCorner.Parent = SliderButton
+        
+        local dragging = false
+        local value = Default
+        
+        SliderButton.MouseButton1Down:Connect(function()
+            dragging = true
+        end)
+        
+        UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = false
+            end
+        end)
+        
+        UserInputService.InputChanged:Connect(function(input)
+            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local mousePos = UserInputService:GetMouseLocation()
+                local barPos = SliderBar.AbsolutePosition
+                local barSize = SliderBar.AbsoluteSize
+                local relativeX = math.clamp(mousePos.X - barPos.X, 0, barSize.X)
+                local percent = relativeX / barSize.X
+                value = math.floor(Min + (Max - Min) * percent)
+                
+                SliderFill.Size = UDim2.new(percent, 0, 1, 0)
+                SliderButton.Position = UDim2.new(percent, -9, 0.5, -9)
+                SliderLabel.Text = "  "..Name..": "..value
+                Callback(value)
+            end
+        end)
+        
+        return Slider
+    end
+    
+    -- Click vào Tab để hiển thị nội dung
+    TabButton.MouseButton1Click:Connect(function()
+        for _, child in pairs(ScrollFrame:GetChildren()) do
+            if child:IsA("Frame") then
+                child.Visible = false
+            end
+        end
+        TabContent.Visible = true
+        
+        for _, tab in pairs(TabContainer:GetChildren()) do
+            if tab:IsA("TextButton") then
+                tab.BackgroundTransparency = 0.3
+            end
+        end
+        TabButton.BackgroundTransparency = 0
+    end)
+    
+    -- Cập nhật kích thước Section
+    CurrentSection.Size = UDim2.new(1, 0, 0, (#CurrentSection:GetChildren() * 35) + 30)
+    
+    return TabContent
+end
+
+-- Toggle Menu khi chạm vào Icon
+IconButton.MouseButton1Click:Connect(function()
+    MainMenu.Visible = not MainMenu.Visible
+end)
+
+CloseButton.MouseButton1Click:Connect(function()
+    MainMenu.Visible = false
+end)
+
+-- ============================================
+-- TÍNH NĂNG HACK BLOX FRUITS
+-- ============================================
+
+-- Tab Auto Farm
+local FarmTab = OrionLib:MakeTab("Auto Farm", "🌾")
+
+local FarmSection = FarmTab:AddSection("Cài Đặt Farm")
+
+-- Biến toàn cục cho farm
+local AutoFarmEnabled = false
+local SelectedMob = "Bandit"
+local FarmSpeed = 1
+local TeleportToMob = false
+
+FarmTab:AddToggle("Auto Farm", false, function(state)
+    AutoFarmEnabled = state
+    if state then
+        spawn(function()
+            while AutoFarmEnabled do
+                pcall(function()
+                    local mobs = {}
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("Model") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                            if v.Name == SelectedMob or SelectedMob == "All" then
+                                table.insert(mobs, v)
+                            end
+                        end
+                    end
+                    
+                    if #mobs > 0 then
+                        local target = mobs[1]
+                        local distance = (LocalPlayer.Character.HumanoidRootPart.Position - target.HumanoidRootPart.Position).Magnitude
+                        
+                        if distance > 5 and TeleportToMob then
+                            LocalPlayer.Character.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0, 0, 5)
+                        end
+                        
+                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Attack", target)
+                    end
+                end)
+                wait(0.1 / FarmSpeed)
+            end
+        end)
+    end
+end)
+
+FarmTab:AddSlider("Tốc Độ Farm", 1, 10, 1, function(value)
+    FarmSpeed = value
+end)
+
+FarmTab:AddToggle("Dịch Chuyển Đến Mục Tiêu", false, function(state)
+    TeleportToMob = state
+end)
+
+-- Tab ESP
+local ESPTab = OrionLib:MakeTab("ESP", "👁️")
+
+local ESPSection = ESPTab:AddSection("Cài Đặt ESP")
+
+-- Lưu trữ ESP objects
+local ESPObjects = {}
+local ESPEnabled = false
+
+-- Hàm tạo highlight
+local function CreateESP(target)
+    if target:FindFirstChild("ESPBox") then return end
+    
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "ESPBox"
+    highlight.Parent = target
+    highlight.FillTransparency = 0.5
+    highlight.OutlineTransparency = 0
+    highlight.FillColor = Color3.fromRGB(255, 0, 0)
+    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "ESPName"
+    billboard.Parent = target
+    billboard.Size = UDim2.new(0, 100, 0, 20)
+    billboard.AlwaysOnTop = true
+    billboard.StudsOffset = Vector3.new(0, 3, 0)
+    
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Parent = billboard
+    nameLabel.Size = UDim2.new(1, 0, 1, 0)
+    nameLabel.Text = target.Name.." ["..math.floor(target.Humanoid.Health).." HP]"
+    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nameLabel.TextSize = 12
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.BackgroundTransparency = 1
+    
+    table.insert(ESPObjects, {target, highlight, billboard})
+end
+
+-- Hàm xóa ESP
+local function ClearESP()
+    for _, data in pairs(ESPObjects) do
+        if data[2] then data[2]:Destroy() end
+        if data[3] then data[3]:Destroy() end
+    end
+    ESPObjects = {}
+end
+
+ESPTab:AddToggle("Hiển Thị ESP", false, function(state)
+    ESPEnabled = state
+    if not state then
+        ClearESP()
+        return
+    end
+    
+    spawn(function()
+        while ESPEnabled do
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v:IsA("Model") and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 and v ~= LocalPlayer.Character then
+                    CreateESP(v)
+                end
+            end
+            wait(1)
+        end
+    end)
+end)
+
+ESPTab:AddToggle("ESP Người Chơi", false, function(state)
+    -- Logic ESP cho người chơi
+end)
+
+ESPTab:AddToggle("ESP Trái Ác Quỷ", false, function(state)
+    -- Logic ESP cho trái ác quỷ
+end)
+
+-- Tab Teleport
+local TeleportTab = OrionLib:MakeTab("Dịch Chuyển", "🌍")
+
+local TeleportSection = TeleportTab:AddSection("Điểm Dịch Chuyển")
+
+local locations = {
+    ["Đảo Khởi Đầu"] = CFrame.new(-1071, 5, -3685),
+    ["Đảo Rừng Rậm"] = CFrame.new(-1606, 36, -4356),
+    ["Đảo Cát"] = CFrame.new(-1723, 9, -4368),
+    ["Đảo Đông Cứng"] = CFrame.new(-1174, 23, -4562),
+    ["Đảo Sky"] = CFrame.new(-4970, 717, -2554),
+    ["Đảo Lính Mới"] = CFrame.new(-1174, 23, -4562),
+    ["Sea 2"] = CFrame.new(-1138, 16, -4327),
+}
+
+for name, cframe in pairs(locations) do
+    TeleportTab:AddButton("Dịch Chuyển Đến "..name, function()
+        pcall(function()
+            LocalPlayer.Character.HumanoidRootPart.CFrame = cframe
+        end)
+    end)
+end
+
+-- Tab Chiến Đấu
+local CombatTab = OrionLib:MakeTab("Chiến Đấu", "⚔️")
+
+local CombatSection = CombatTab:AddSection("Cài Đặt Chiến Đấu")
+
+CombatTab:AddToggle("Tự Động Sử Dụng Kỹ Năng", false, function(state)
+    if state then
+        spawn(function()
+            while state do
+                pcall(function()
+                    for i = 1, 4 do
+                        game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer("Skill", i)
+                        wait(0.5)
+                    end
+                end)
+                wait(2)
+            end
+        end)
+    end
+end)
+
+CombatTab:AddToggle("Tự Động Né", false, function(state)
+    if state then
+        spawn(function()
+            while state do
+                pcall(function()
+                    LocalPlayer.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 10)
+                    wait(0.5)
+                    LocalPlayer.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, -10)
+                end)
+                wait(1)
+            end
+        end)
+    end
+end)
+
+CombatTab:AddToggle("God Mode", false, function(state)
+    if state then
+        spawn(function()
+            while state do
+                pcall(function()
+                    LocalPlayer.Character.Humanoid.Health = LocalPlayer.Character.Humanoid.MaxHealth
+                    LocalPlayer.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Dead, false)
+                end)
+                wait(0.1)
+            end
+        end)
+    end
+end)
+
+-- Tab Khác
+local MiscTab = OrionLib:MakeTab("Tính Năng Khác", "🔧")
+
+local MiscSection = MiscTab:AddSection("Tiện Ích")
+
+MiscTab:AddToggle("Tự Động Thu Thập", false, function(state)
+    if state then
+        spawn(function()
+            while state do
+                pcall(function()
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("Tool") or v.Name:find("Fruit") or v.Name:find("Chest") then
+                            local distance = (LocalPlayer.Character.HumanoidRootPart.Position - v.Position).Magnitude
+                            if distance < 50 then
+                                firetouchinterest(LocalPlayer.Character.HumanoidRootPart, v, 0)
+                                firetouchinterest(LocalPlayer.Character.HumanoidRootPart, v, 1)
+                            end
+                        end
+                    end
+                end)
+                wait(1)
+            end
+        end)
+    end
+end)
+
+MiscTab:AddToggle("Tăng Tốc Độ Di Chuyển", false, function(state)
+    if state then
+        LocalPlayer.Character.Humanoid.WalkSpeed = 100
+    else
+        LocalPlayer.Character.Humanoid.WalkSpeed = 16
+    end
+end)
+
+MiscTab:AddToggle("Nhảy Cao", false, function(state)
+    if state then
+        LocalPlayer.Character.Humanoid.JumpPower = 200
+    else
+        LocalPlayer.Character.Humanoid.JumpPower = 50
+    end
+end)
+
+MiscTab:AddToggle("Bay", false, function(state)
+    if state then
+        LocalPlayer.Character.Humanoid.PlatformStand = true
+        local bodyGyro = Instance.new("BodyGyro")
+        bodyGyro.Parent = LocalPlayer.Character.HumanoidRootPart
+        bodyGyro.P = 9e9
+        bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+        bodyGyro.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
+        
+        local bodyVelocity = Instance.new("BodyVelocity")
+        bodyVelocity.Parent = LocalPlayer.Character.HumanoidRootPart
+        bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+        bodyVelocity.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+        
+        spawn(function()
+            while state do
+                bodyGyro.CFrame = workspace.CurrentCamera.CFrame
+                bodyVelocity.Velocity = workspace.CurrentCamera.CFrame.LookVector * 50
+                wait()
+            end
+        end)
+    end
+end)
+
+-- Tab Hỗ Trợ
+local SupportTab = OrionLib:MakeTab("Hỗ Trợ", "💬")
+
+SupportTab:AddSection("Thông Tin")
+SupportTab:AddButton("Copy Link Discord", function()
+    setclipboard("https://discord.gg/bloxfruitssupport")
+end)
