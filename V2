@@ -1,0 +1,370 @@
+--[[
+    Script Hack Blox Fruits - Auto Farm Toàn Diện
+    Hỗ trợ: Auto Farm, Auto Nhận Nhiệm Vụ, Định Vị NPC
+    Icon Menu: wqv75w.png | Hình nền Menu: 4txoxc.png
+]]
+
+-- Khởi tạo thư viện
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
+local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
+
+-- Icon và hình nền menu
+local MenuIcon = "https://files.catbox.moe/wqv75w.png"
+local MenuBackground = "https://files.catbox.moe/4txoxc.png"
+
+-- Cửa sổ chính
+local Window = Fluent:CreateWindow({
+    Title = "Anura Blox Fruits",
+    SubTitle = "by nhatanh",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(580, 460),
+    Acrylic = false,
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.RightControl
+})
+
+-- Thiết lập icon menu
+local IconButton = Instance.new("ScreenGui")
+IconButton.Parent = game:GetService("CoreGui")
+local IconImage = Instance.new("ImageButton")
+IconImage.Size = UDim2.new(0, 50, 0, 50)
+IconImage.Position = UDim2.new(0, 20, 0.5, -25)
+IconImage.Image = MenuIcon
+IconImage.BackgroundTransparency = 1
+IconImage.Parent = IconButton
+
+-- Biến trạng thái
+local MenuOpen = true
+local AutoFarmEnabled = false
+local CurrentQuest = nil
+local FarmTarget = nil
+
+-- Tab chính
+local Tabs = {
+    Main = Window:AddTab({ Title = "Auto Farm", Icon = "swords" }),
+    Settings = Window:AddTab({ Title = "Cài Đặt", Icon = "settings" })
+}
+
+-- Hàm lấy người chơi
+local function getPlayer()
+    return game:GetService("Players").LocalPlayer
+end
+
+-- Hàm lấy nhân vật
+local function getCharacter()
+    return getPlayer().Character or getPlayer().CharacterAdded:Wait()
+end
+
+-- Hàm lấy vị trí hiện tại
+local function getPosition()
+    return getCharacter():FindFirstChild("HumanoidRootPart").CFrame
+end
+
+-- Hàm di chuyển đến vị trí
+local function moveTo(cframe)
+    local char = getCharacter()
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        hrp.CFrame = cframe
+    end
+end
+
+-- Hàm lấy danh sách NPC
+local function getNPCs()
+    local npcs = {}
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Model") and v:FindFirstChild("Humanoid") and v:FindFirstChild("Head") then
+            if v:FindFirstChild("Humanoid").Health > 0 then
+                table.insert(npcs, v)
+            end
+        end
+    end
+    return npcs
+end
+
+-- Hàm lấy danh sách nhiệm vụ NPC
+local function getQuestNPCs()
+    local questNPCs = {}
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("Model") and v:FindFirstChild("Head") then
+            if v:FindFirstChild("QuestHead") or v:FindFirstChild("QuestionMark") then
+                table.insert(questNPCs, v)
+            end
+        end
+    end
+    return questNPCs
+end
+
+-- Hàm tìm NPC gần nhất theo tên
+local function findNearestNPC(name)
+    local nearest = nil
+    local minDist = math.huge
+    local pos = getPosition().Position
+    for _, v in pairs(getNPCs()) do
+        if v.Name:lower():find(name:lower()) then
+            local dist = (v:FindFirstChild("Head").Position - pos).Magnitude
+            if dist < minDist then
+                minDist = dist
+                nearest = v
+            end
+        end
+    end
+    return nearest
+end
+
+-- Hàm kiểm tra nhiệm vụ hiện tại
+local function getCurrentQuest()
+    local player = getPlayer()
+    local questFolder = player:FindFirstChild("PlayerGui"):FindFirstChild("QuestGui")
+    if questFolder then
+        for _, v in pairs(questFolder:GetDescendants()) do
+            if v:IsA("TextLabel") and v.Text ~= "" then
+                return v.Text
+            end
+        end
+    end
+    return nil
+end
+
+-- Hàm nhận nhiệm vụ
+local function acceptQuest(npc)
+    if npc and npc:FindFirstChild("Head") then
+        local pos = npc.Head.Position
+        moveTo(CFrame.new(pos + Vector3.new(0, 3, 0)))
+        task.wait(0.5)
+        -- Giả lập nhấn E để nhận nhiệm vụ
+        local vim = game:GetService("VirtualInputManager")
+        vim:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+        task.wait(0.2)
+        vim:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+        task.wait(0.5)
+    end
+end
+
+-- Hàm farm NPC mục tiêu
+local function farmNPC(npc)
+    if not npc then return end
+    local char = getCharacter()
+    local tool = char:FindFirstChildOfClass("Tool")
+    if not tool then
+        -- Tự động trang bị vũ khí
+        local backpack = getPlayer().Backpack
+        if #backpack:GetChildren() > 0 then
+            local weapon = backpack:GetChildren()[1]
+            char.Humanoid:EquipTool(weapon)
+            task.wait(0.3)
+            tool = char:FindFirstChildOfClass("Tool")
+        end
+    end
+    
+    -- Di chuyển đến NPC và tấn công
+    if npc:FindFirstChild("Head") then
+        moveTo(CFrame.new(npc.Head.Position + Vector3.new(0, 2, 2)))
+        if tool and tool:FindFirstChild("Handle") then
+            tool:Activate()
+            task.wait(0.5)
+            tool:Deactivate()
+        end
+    end
+end
+
+-- Hàm định vị NPC theo tên
+local function locateNPC(name)
+    local npc = findNearestNPC(name)
+    if npc and npc:FindFirstChild("Head") then
+        moveTo(CFrame.new(npc.Head.Position + Vector3.new(0, 50, 0)))
+        return npc
+    end
+    return nil
+end
+
+-- Auto Farm Loop
+local function autoFarmLoop()
+    while AutoFarmEnabled do
+        local success, err = pcall(function()
+            -- Bước 1: Kiểm tra nhiệm vụ hiện tại
+            local currentQuest = getCurrentQuest()
+            
+            if not currentQuest or currentQuest == "" then
+                -- Bước 2: Không có nhiệm vụ -> Nhận nhiệm vụ mới
+                local questNPCs = getQuestNPCs()
+                if #questNPCs > 0 then
+                    local questNPC = questNPCs[1]
+                    acceptQuest(questNPC)
+                    task.wait(1)
+                end
+            else
+                -- Bước 3: Có nhiệm vụ -> Farm NPC theo nhiệm vụ
+                local questText = currentQuest
+                local npcName = ""
+                
+                -- Trích xuất tên NPC từ text nhiệm vụ
+                if questText:find("defeat") then
+                    npcName = questText:match("defeat (.+)") or questText:match("Defeat (.+)")
+                elseif questText:find("kill") then
+                    npcName = questText:match("kill (.+)") or questText:match("Kill (.+)")
+                end
+                
+                if npcName and npcName ~= "" then
+                    local target = findNearestNPC(npcName)
+                    if target then
+                        farmNPC(target)
+                    else
+                        -- Không tìm thấy NPC -> Định vị đến NPC
+                        locateNPC(npcName)
+                    end
+                end
+            end
+        end)
+        
+        if not success then
+            warn("Lỗi auto farm: " .. tostring(err))
+        end
+        
+        task.wait(0.1)
+    end
+end
+
+-- Giao diện Tab Auto Farm
+local AutoFarmSection = Tabs.Main:AddSection("Auto Farm Chính")
+
+local ToggleAutoFarm = AutoFarmSection:AddToggle("AutoFarmToggle", {
+    Title = "Bật/Tắt Auto Farm",
+    Description = "Tự động nhận nhiệm vụ và farm NPC",
+    Default = false,
+    Callback = function(Value)
+        AutoFarmEnabled = Value
+        if Value then
+            task.spawn(autoFarmLoop)
+        end
+    end
+})
+
+-- Chọn NPC mục tiêu
+local NPCDropdown = AutoFarmSection:AddDropdown("NPCDropdown", {
+    Title = "Chọn NPC Farm",
+    Description = "Chọn NPC để farm",
+    Values = {"Bandit", "Pirate", "Marine", "Monkey", "Gorilla", "Boby", "Snowman", "Yeti"},
+    Multi = false,
+    Default = "Bandit",
+})
+
+-- Định vị NPC
+local LocateSection = Tabs.Main:AddSection("Định Vị NPC")
+
+local LocateInput = LocateSection:AddInput("LocateInput", {
+    Title = "Tên NPC cần định vị",
+    Description = "Nhập tên NPC để dịch chuyển đến",
+    Default = "",
+    Placeholder = "VD: Bandit",
+    Callback = function(Value)
+        -- Không làm gì khi nhập
+    end
+})
+
+local LocateButton = LocateSection:AddButton({
+    Title = "Định Vị NPC",
+    Description = "Dịch chuyển đến NPC gần nhất",
+    Callback = function()
+        local npcName = LocateInput.Value
+        if npcName and npcName ~= "" then
+            locateNPC(npcName)
+        end
+    end
+})
+
+-- Chức năng di chuyển nhanh
+local TeleportSection = Tabs.Main:AddSection("Dịch Chuyển Nhanh")
+
+local TeleportDropdown = TeleportSection:AddDropdown("TeleportDropdown", {
+    Title = "Địa điểm",
+    Description = "Chọn địa điểm để dịch chuyển",
+    Values = {
+        "Pirate Island", "Marine Base", "Jungle", "Desert", 
+        "Snow Island", "Magma Island", "Sky Island", "Prison"
+    },
+    Multi = false,
+    Default = "Jungle",
+})
+
+-- Tọa độ các địa điểm
+local Locations = {
+    ["Pirate Island"] = CFrame.new(1450, 50, 1500),
+    ["Marine Base"] = CFrame.new(-2500, 50, 3500),
+    ["Jungle"] = CFrame.new(-1200, 50, -800),
+    ["Desert"] = CFrame.new(800, 50, 2000),
+    ["Snow Island"] = CFrame.new(3000, 50, -2000),
+    ["Magma Island"] = CFrame.new(-3000, 50, -3500),
+    ["Sky Island"] = CFrame.new(-5000, 500, -1000),
+    ["Prison"] = CFrame.new(4800, 50, 2000),
+}
+
+local TeleportButton = TeleportSection:AddButton({
+    Title = "Dịch Chuyển",
+    Description = "Dịch chuyển đến địa điểm đã chọn",
+    Callback = function()
+        local location = TeleportDropdown.Value
+        if Locations[location] then
+            moveTo(Locations[location])
+        end
+    end
+})
+
+-- Cài đặt tốc độ
+local SettingsSection = Tabs.Settings:AddSection("Cài Đặt Farm")
+
+local SpeedSlider = SettingsSection:AddSlider("SpeedSlider", {
+    Title = "Tốc Độ Farm",
+    Description = "Điều chỉnh tốc độ farm (giây)",
+    Default = 0.5,
+    Min = 0.1,
+    Max = 2,
+    Rounding = 1,
+    Callback = function(Value)
+        _G.FarmSpeed = Value
+    end
+})
+
+-- Auto Equip Weapon
+local ToggleAutoEquip = SettingsSection:AddToggle("AutoEquipToggle", {
+    Title = "Tự Động Trang Bị Vũ Khí",
+    Description = "Tự động trang bị vũ khí mạnh nhất",
+    Default = true,
+})
+
+-- Icon Menu đóng/mở
+IconImage.MouseButton1Click:Connect(function()
+    MenuOpen = not MenuOpen
+    if MenuOpen then
+        Window:Show()
+    else
+        Window:Hide()
+    end
+end)
+
+-- Khởi tạo Save Manager
+SaveManager:SetLibrary(Fluent)
+InterfaceManager:SetLibrary(Fluent)
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({})
+InterfaceManager:SetFolder("AnuraBloxFruits")
+SaveManager:SetFolder("AnuraBloxFruits/configs")
+SaveManager:BuildConfigSection(Tabs.Settings)
+InterfaceManager:BuildInterfaceSection(Tabs.Settings)
+
+-- Tải config
+SaveManager:LoadAutoloadConfig()
+
+-- Thiết lập menu chính
+Window:SelectTab(1)
+
+-- Giao diện mặc định hiển thị
+Window:Show()
+
+-- Thông báo đã tải
+Fluent:Notify({
+    Title = "Anura Blox Fruits",
+    Content = "Script đã tải thành công!",
+    Duration = 5
+})
